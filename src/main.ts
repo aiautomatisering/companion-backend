@@ -2,13 +2,21 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Extract API prefix from BASE_URL
+  // Extract API prefix from environment or default to 'api'
   const GLOBAL_PREFIX = process.env.GLOBAL_PREFIX || 'api';
   app.setGlobalPrefix(GLOBAL_PREFIX);
+
+  // IMPORTANT: Register the raw body middleware for the webhook route.
+  // If your webhook controller is defined at 'subscriptions/webhook', then the full route is '/api/subscriptions/webhook'.
+  app.use(
+    `/${GLOBAL_PREFIX}/subscriptions/webhook`,
+    express.raw({ type: 'application/json' })
+  );
 
   // Global Validation Pipe
   app.useGlobalPipes(
